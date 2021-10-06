@@ -18,8 +18,7 @@
             "dynamodb:GetItem",
             "dynamodb:PutItem",
             "dynamodb:UpdateItem",
-            "dynamodb:DeleteItem",
-            "dynomodb:DescribeTable"
+            "dynamodb:DeleteItem"
           ],
           "Resource": [
             {
@@ -114,6 +113,18 @@
               "LogGroupName": "/aws/lambda/my-express-application-dev-app"
             }
           },
+          "GetUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/my-express-application-dev-getUser"
+            }
+          },
+          "CreateUserLogGroup": {
+            "Type": "AWS::Logs::LogGroup",
+            "Properties": {
+              "LogGroupName": "/aws/lambda/my-express-application-dev-createUser"
+            }
+          },
           "IamRoleLambdaExecution": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -201,7 +212,7 @@
                 "S3Bucket": {
                   "Ref": "ServerlessDeploymentBucket"
                 },
-                "S3Key": "serverless/my-express-application/dev/1632944818100-2021-09-29T19:46:58.100Z/my-express-application.zip"
+                "S3Key": "serverless/my-express-application/dev/1633478362285-2021-10-05T23:59:22.285Z/my-express-application.zip"
               },
               "Handler": "index.handler",
               "Runtime": "nodejs14.x",
@@ -224,14 +235,94 @@
               "AppLogGroup"
             ]
           },
-          "AppLambdaVersionG4EIxOgsGFp55NhYvEZbUMIfgwFxDATl7HMct3yFo": {
+          "GetUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/my-express-application/dev/1633478362285-2021-10-05T23:59:22.285Z/my-express-application.zip"
+              },
+              "Handler": "index.handler",
+              "Runtime": "nodejs14.x",
+              "FunctionName": "my-express-application-dev-getUser",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "USERS_TABLE": "users-table-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "GetUserLogGroup"
+            ]
+          },
+          "CreateUserLambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+              "Code": {
+                "S3Bucket": {
+                  "Ref": "ServerlessDeploymentBucket"
+                },
+                "S3Key": "serverless/my-express-application/dev/1633478362285-2021-10-05T23:59:22.285Z/my-express-application.zip"
+              },
+              "Handler": "index.handler",
+              "Runtime": "nodejs14.x",
+              "FunctionName": "my-express-application-dev-createUser",
+              "MemorySize": 1024,
+              "Timeout": 6,
+              "Environment": {
+                "Variables": {
+                  "USERS_TABLE": "users-table-dev"
+                }
+              },
+              "Role": {
+                "Fn::GetAtt": [
+                  "IamRoleLambdaExecution",
+                  "Arn"
+                ]
+              }
+            },
+            "DependsOn": [
+              "CreateUserLogGroup"
+            ]
+          },
+          "GetUserLambdaVersionO12eaylkhaMkesGT937E0F1LyAJ1y71gN39UBtcmtg": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "GetUserLambdaFunction"
+              },
+              "CodeSha256": "lUXKIC5PbRw0MDhvTOz5J3vf5ZXuw9mwbD0Dx/Puqfo="
+            }
+          },
+          "CreateUserLambdaVersionrAiiXR1hBHAb1nl26VuLl4khNFNcgsPwg7hinyy88": {
+            "Type": "AWS::Lambda::Version",
+            "DeletionPolicy": "Retain",
+            "Properties": {
+              "FunctionName": {
+                "Ref": "CreateUserLambdaFunction"
+              },
+              "CodeSha256": "lUXKIC5PbRw0MDhvTOz5J3vf5ZXuw9mwbD0Dx/Puqfo="
+            }
+          },
+          "AppLambdaVersion9DxFT9I6OdkDV7QO7UC6tZFfzZodq1UiQYZM6K3LIe4": {
             "Type": "AWS::Lambda::Version",
             "DeletionPolicy": "Retain",
             "Properties": {
               "FunctionName": {
                 "Ref": "AppLambdaFunction"
               },
-              "CodeSha256": "kjUhTlu7UGfA29ZEzh+ALSU5ikeLVccHOUme7PBCyfQ="
+              "CodeSha256": "lUXKIC5PbRw0MDhvTOz5J3vf5ZXuw9mwbD0Dx/Puqfo="
             }
           },
           "ApiGatewayRestApi": {
@@ -254,6 +345,33 @@
                   "ApiGatewayRestApi",
                   "RootResourceId"
                 ]
+              },
+              "PathPart": "{proxy+}",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceUsers": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Fn::GetAtt": [
+                  "ApiGatewayRestApi",
+                  "RootResourceId"
+                ]
+              },
+              "PathPart": "users",
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              }
+            }
+          },
+          "ApiGatewayResourceUsersProxyVar": {
+            "Type": "AWS::ApiGateway::Resource",
+            "Properties": {
+              "ParentId": {
+                "Ref": "ApiGatewayResourceUsers"
               },
               "PathPart": "{proxy+}",
               "RestApiId": {
@@ -356,7 +474,99 @@
               "AppLambdaPermissionApiGateway"
             ]
           },
-          "ApiGatewayDeployment1632944813690": {
+          "ApiGatewayMethodUsersProxyVarGet": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "GET",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsersProxyVar"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "GetUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "GetUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayMethodUsersPost": {
+            "Type": "AWS::ApiGateway::Method",
+            "Properties": {
+              "HttpMethod": "POST",
+              "RequestParameters": {},
+              "ResourceId": {
+                "Ref": "ApiGatewayResourceUsers"
+              },
+              "RestApiId": {
+                "Ref": "ApiGatewayRestApi"
+              },
+              "ApiKeyRequired": false,
+              "AuthorizationType": "NONE",
+              "Integration": {
+                "IntegrationHttpMethod": "POST",
+                "Type": "AWS_PROXY",
+                "Uri": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:",
+                      {
+                        "Ref": "AWS::Partition"
+                      },
+                      ":apigateway:",
+                      {
+                        "Ref": "AWS::Region"
+                      },
+                      ":lambda:path/2015-03-31/functions/",
+                      {
+                        "Fn::GetAtt": [
+                          "CreateUserLambdaFunction",
+                          "Arn"
+                        ]
+                      },
+                      "/invocations"
+                    ]
+                  ]
+                }
+              },
+              "MethodResponses": []
+            },
+            "DependsOn": [
+              "CreateUserLambdaPermissionApiGateway"
+            ]
+          },
+          "ApiGatewayDeployment1633478353005": {
             "Type": "AWS::ApiGateway::Deployment",
             "Properties": {
               "RestApiId": {
@@ -366,7 +576,9 @@
             },
             "DependsOn": [
               "ApiGatewayMethodAny",
-              "ApiGatewayMethodProxyVarAny"
+              "ApiGatewayMethodProxyVarAny",
+              "ApiGatewayMethodUsersProxyVarGet",
+              "ApiGatewayMethodUsersPost"
             ]
           },
           "AppLambdaPermissionApiGateway": {
@@ -375,6 +587,80 @@
               "FunctionName": {
                 "Fn::GetAtt": [
                   "AppLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "GetUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "GetUserLambdaFunction",
+                  "Arn"
+                ]
+              },
+              "Action": "lambda:InvokeFunction",
+              "Principal": "apigateway.amazonaws.com",
+              "SourceArn": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":execute-api:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":",
+                    {
+                      "Ref": "ApiGatewayRestApi"
+                    },
+                    "/*/*"
+                  ]
+                ]
+              }
+            }
+          },
+          "CreateUserLambdaPermissionApiGateway": {
+            "Type": "AWS::Lambda::Permission",
+            "Properties": {
+              "FunctionName": {
+                "Fn::GetAtt": [
+                  "CreateUserLambdaFunction",
                   "Arn"
                 ]
               },
@@ -438,10 +724,28 @@
               "Name": "sls-my-express-application-dev-ServerlessDeploymentBucketName"
             }
           },
+          "GetUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "GetUserLambdaVersionO12eaylkhaMkesGT937E0F1LyAJ1y71gN39UBtcmtg"
+            },
+            "Export": {
+              "Name": "sls-my-express-application-dev-GetUserLambdaFunctionQualifiedArn"
+            }
+          },
+          "CreateUserLambdaFunctionQualifiedArn": {
+            "Description": "Current Lambda function version",
+            "Value": {
+              "Ref": "CreateUserLambdaVersionrAiiXR1hBHAb1nl26VuLl4khNFNcgsPwg7hinyy88"
+            },
+            "Export": {
+              "Name": "sls-my-express-application-dev-CreateUserLambdaFunctionQualifiedArn"
+            }
+          },
           "AppLambdaFunctionQualifiedArn": {
             "Description": "Current Lambda function version",
             "Value": {
-              "Ref": "AppLambdaVersionG4EIxOgsGFp55NhYvEZbUMIfgwFxDATl7HMct3yFo"
+              "Ref": "AppLambdaVersion9DxFT9I6OdkDV7QO7UC6tZFfzZodq1UiQYZM6K3LIe4"
             },
             "Export": {
               "Name": "sls-my-express-application-dev-AppLambdaFunctionQualifiedArn"
@@ -560,8 +864,17 @@
       "vpc": {}
     },
     "custom": {
-      "tableName": "users-table-dev"
+      "tableName": "users-table-dev",
+      "dynamodb": {
+        "start": {
+          "migrate": true
+        }
+      }
     },
+    "plugins": [
+      "serverless-dynamodb-local",
+      "serverless-offline"
+    ],
     "pluginsData": {},
     "functions": {
       "app": {
@@ -580,7 +893,37 @@
         "timeout": 6,
         "runtime": "nodejs14.x",
         "vpc": {},
-        "versionLogicalId": "AppLambdaVersionG4EIxOgsGFp55NhYvEZbUMIfgwFxDATl7HMct3yFo"
+        "versionLogicalId": "AppLambdaVersion9DxFT9I6OdkDV7QO7UC6tZFfzZodq1UiQYZM6K3LIe4"
+      },
+      "getUser": {
+        "handler": "index.handler",
+        "events": [
+          {
+            "http": "GET /users/{proxy+}"
+          }
+        ],
+        "name": "my-express-application-dev-getUser",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs14.x",
+        "vpc": {},
+        "versionLogicalId": "GetUserLambdaVersionO12eaylkhaMkesGT937E0F1LyAJ1y71gN39UBtcmtg"
+      },
+      "createUser": {
+        "handler": "index.handler",
+        "events": [
+          {
+            "http": "POST /users"
+          }
+        ],
+        "name": "my-express-application-dev-createUser",
+        "package": {},
+        "memory": 1024,
+        "timeout": 6,
+        "runtime": "nodejs14.x",
+        "vpc": {},
+        "versionLogicalId": "CreateUserLambdaVersionrAiiXR1hBHAb1nl26VuLl4khNFNcgsPwg7hinyy88"
       }
     },
     "resources": {
@@ -619,6 +962,9 @@
       "custom": {
         "$ref": "$[\"service\"][\"custom\"]"
       },
+      "plugins": {
+        "$ref": "$[\"service\"][\"plugins\"]"
+      },
       "provider": {
         "$ref": "$[\"service\"][\"provider\"]"
       },
@@ -634,7 +980,7 @@
     "artifact": "/Users/davidevans/dev/courses/BEW_2_1/serverless-api/.serverless/my-express-application.zip"
   },
   "package": {
-    "artifactDirectoryName": "serverless/my-express-application/dev/1632944818100-2021-09-29T19:46:58.100Z",
+    "artifactDirectoryName": "serverless/my-express-application/dev/1633478362285-2021-10-05T23:59:22.285Z",
     "artifact": "my-express-application.zip"
   }
 }
